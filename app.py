@@ -31,7 +31,14 @@ class HealthRecord(db.Model):
     horse_id = db.Column(db.Integer, nullable=False)
     note = db.Column(db.String(200), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
+class Record(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    horse_id = db.Column(db.Integer, nullable=False)
+    type = db.Column(db.String(50))   # Vet, Farrier, Worming, etc.
+    title = db.Column(db.String(100)) # e.g. “Trim”, “Vaccination”
+    details = db.Column(db.String(200))
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+    next_due = db.Column(db.DateTime, nullable=True)
 with app.app_context():
     db.create_all()
 
