@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold">{{ horse.name }}</h1>
+
+<h2 class="mt-4 font-semibold">Health</h2>
+<form method="POST" action="/add_health/{{ horse.id }}">
+<input name="note" class="border p-2 w-full mb-2">
+<button class="bg-green-500 text-white p-2 w-full rounded">Add</button>
+</form>
+
+{% for h in health %}
+<div class="bg-white p-2 rounded shadow mb-2">{{ h.note }}</div>
+{% endfor %}
+
+<h2 class="mt-4 font-semibold">Appointments</h2>
+<form method="POST" action="/add_appointment/{{ horse.id }}">
+<input name="service" placeholder="Service" class="border p-2 w-full mb-2">
+<input type="date" name="date" class="border p-2 w-full mb-2">
+<button class="bg-blue-500 text-white p-2 w-full rounded">Add</button>
+</form>
+
+{% for a in appointments %}
+<div class="bg-white p-2 rounded shadow mb-2">{{ a.service }}</div>
+{% endfor %}
+{% endblock %}
