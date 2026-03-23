@@ -97,6 +97,29 @@ def add_appointment(horse_id):
         db.session.add(appt)
         db.session.commit()
     return redirect(f"/horse/{horse_id}")
+@app.route("/add_record/<int:horse_id>", methods=["POST"])
+def add_record(horse_id):
+    type = request.form.get("type")
+    title = request.form.get("title")
+    details = request.form.get("details")
+    date_text = request.form.get("date")
+    next_due_text = request.form.get("next_due")
 
+    date = datetime.strptime(date_text, "%Y-%m-%d") if date_text else datetime.utcnow()
+    next_due = datetime.strptime(next_due_text, "%Y-%m-%d") if next_due_text else None
+
+    record = Record(
+        horse_id=horse_id,
+        type=type,
+        title=title,
+        details=details,
+        date=date,
+        next_due=next_due
+    )
+
+    db.session.add(record)
+    db.session.commit()
+
+    return redirect(f"/horse/{horse_id}")
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
