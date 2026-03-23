@@ -2,11 +2,16 @@
 {% block content %}
 <h1 class="text-xl font-bold mb-4">Horses</h1>
 <a href="/add_horse" class="bg-blue-500 text-white p-2 rounded block mb-4 text-center">Add Horse</a>
-{% for horse in horses %}
-<a href="/horse/{{ horse.id }}">
-<div class="bg-white p-3 rounded shadow mb-2">
-{{ horse.name }}
-</div>
-</a>
-{% endfor %}
+{% if horses %}
+  {% for horse in horses %}
+  <a href="/horse/{{ horse.id }}">
+    <div class="bg-white p-3 rounded shadow mb-2">
+      <div class="font-semibold">{{ horse.name }}</div>
+      <div class="text-sm text-gray-500">{{ horse.breed or '' }}</div>
+    </div>
+  </a>
+  {% endfor %}
+{% else %}
+  <div class="bg-white p-3 rounded shadow mb-2 text-gray-500">No horses yet.</div>
+{% endif %}
 {% endblock %}

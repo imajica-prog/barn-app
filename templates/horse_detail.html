@@ -1,25 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="text-xl font-bold">{{ horse.name }}</h1>
+<div class="text-gray-500 mb-4">{{ horse.breed or '' }}</div>
 
 <h2 class="mt-4 font-semibold">Health</h2>
 <form method="POST" action="/add_health/{{ horse.id }}">
-<input name="note" class="border p-2 w-full mb-2">
+<input name="note" class="border p-2 w-full mb-2 rounded" placeholder="Health note">
 <button class="bg-green-500 text-white p-2 w-full rounded">Add</button>
 </form>
 
-{% for h in health %}
-<div class="bg-white p-2 rounded shadow mb-2">{{ h.note }}</div>
-{% endfor %}
+{% if health %}
+  {% for h in health %}
+  <div class="bg-white p-2 rounded shadow mb-2">
+    <div>{{ h.note }}</div>
+    <div class="text-xs text-gray-400">{{ h.date.strftime('%Y-%m-%d') }}</div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="bg-white p-2 rounded shadow mb-2 text-gray-500">No health notes yet.</div>
+{% endif %}
 
 <h2 class="mt-4 font-semibold">Appointments</h2>
 <form method="POST" action="/add_appointment/{{ horse.id }}">
-<input name="service" placeholder="Service" class="border p-2 w-full mb-2">
-<input type="date" name="date" class="border p-2 w-full mb-2">
+<input name="service" placeholder="Service" class="border p-2 w-full mb-2 rounded">
+<input type="date" name="date" class="border p-2 w-full mb-2 rounded">
 <button class="bg-blue-500 text-white p-2 w-full rounded">Add</button>
 </form>
 
-{% for a in appointments %}
-<div class="bg-white p-2 rounded shadow mb-2">{{ a.service }}</div>
-{% endfor %}
+{% if appointments %}
+  {% for a in appointments %}
+  <div class="bg-white p-2 rounded shadow mb-2">
+    <div>{{ a.service }}</div>
+    <div class="text-xs text-gray-400">{{ a.date.strftime('%Y-%m-%d') }}</div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="bg-white p-2 rounded shadow mb-2 text-gray-500">No appointments yet.</div>
+{% endif %}
 {% endblock %}

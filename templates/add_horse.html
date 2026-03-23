@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
+<h1 class="text-xl font-bold mb-4">Add Horse</h1>
 <form method="POST">
-<input name="name" placeholder="Name" class="block mb-2 p-2 border w-full">
-<input name="breed" placeholder="Breed" class="block mb-2 p-2 border w-full">
-<input name="age" type="number" placeholder="Age" class="block mb-2 p-2 border w-full">
+<input name="name" placeholder="Name" class="block mb-2 p-2 border w-full rounded" required>
+<input name="breed" placeholder="Breed" class="block mb-2 p-2 border w-full rounded">
+<input name="age" type="number" placeholder="Age" class="block mb-2 p-2 border w-full rounded">
 <button class="bg-blue-500 text-white p-2 rounded w-full">Save</button>
 </form>
 {% endblock %}
