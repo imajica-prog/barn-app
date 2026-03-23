@@ -62,7 +62,15 @@ def horse_detail(id):
     horse = Horse.query.get_or_404(id)
     health = HealthRecord.query.filter_by(horse_id=id).order_by(HealthRecord.date.desc()).all()
     appointments = Appointment.query.filter_by(horse_id=id).order_by(Appointment.date.desc()).all()
-    return render_template("horse_detail.html", horse=horse, health=health, appointments=appointments)
+    records = Record.query.filter_by(horse_id=id).order_by(Record.date.desc()).all()
+
+    return render_template(
+        "horse_detail.html",
+        horse=horse,
+        health=health,
+        appointments=appointments,
+        records=records
+    )
 
 @app.route("/add_horse", methods=["GET", "POST"])
 def add_horse():
