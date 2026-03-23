@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">Upcoming</h1>
+{% for a in upcoming %}
+<div class="bg-white p-3 rounded shadow mb-2">
+{{ a.service }} - {{ a.date.strftime('%Y-%m-%d') }}
+</div>
+{% endfor %}
+{% endblock %}

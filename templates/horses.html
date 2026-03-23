@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">Horses</h1>
+<a href="/add_horse" class="bg-blue-500 text-white p-2 rounded block mb-4 text-center">Add Horse</a>
+{% for horse in horses %}
+<a href="/horse/{{ horse.id }}">
+<div class="bg-white p-3 rounded shadow mb-2">
+{{ horse.name }}
+</div>
+</a>
+{% endfor %}
+{% endblock %}
