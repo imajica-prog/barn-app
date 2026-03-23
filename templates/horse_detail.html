@@ -36,5 +36,46 @@
   {% endfor %}
 {% else %}
   <div class="bg-white p-2 rounded shadow mb-2 text-gray-500">No appointments yet.</div>
+{% endif %}<h2 class="mt-4 font-semibold">Records</h2>
+
+<form method="POST" action="/add_record/{{ horse.id }}">
+  <select name="type" class="border p-2 w-full mb-2 rounded">
+    <option>Vet</option>
+    <option>Farrier</option>
+    <option>Worming</option>
+    <option>Feed</option>
+    <option>Supplement</option>
+    <option>Vaccine</option>
+    <option>Dental</option>
+    <option>Injury</option>
+    <option>Medication</option>
+    <option>Note</option>
+  </select>
+
+  <input name="title" placeholder="What was done" class="border p-2 w-full mb-2 rounded">
+  <input name="details" placeholder="Details" class="border p-2 w-full mb-2 rounded">
+  <input type="date" name="date" class="border p-2 w-full mb-2 rounded">
+  <input type="date" name="next_due" class="border p-2 w-full mb-2 rounded">
+
+  <button class="bg-purple-500 text-white p-2 w-full rounded">
+    Add Record
+  </button>
+</form>
+
+{% if records %}
+  {% for r in records %}
+  <div class="bg-white p-2 rounded shadow mb-2">
+    <div class="font-semibold">{{ r.type }} - {{ r.title }}</div>
+    <div class="text-sm">{{ r.details }}</div>
+    <div class="text-xs text-gray-400">
+      {{ r.date.strftime('%Y-%m-%d') }}
+      {% if r.next_due %}
+        → Next: {{ r.next_due.strftime('%Y-%m-%d') }}
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="bg-white p-2 rounded shadow mb-2 text-gray-500">No records yet.</div>
 {% endif %}
 {% endblock %}
