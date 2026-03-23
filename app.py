@@ -26,7 +26,8 @@ class HealthRecord(db.Model):
     horse_id = db.Column(db.Integer)
     note = db.Column(db.String(200))
     date = db.Column(db.DateTime, default=datetime.utcnow)
-
+with app.app_context():
+    db.create_all()
 @app.route('/')
 def dashboard():
     today = datetime.utcnow()
