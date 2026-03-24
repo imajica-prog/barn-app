@@ -54,7 +54,13 @@ class FeedProfile(db.Model):
     notes = db.Column(db.String(300))
     cost_per_month = db.Column(db.Float)
     date = db.Column(db.DateTime, default=datetime.utcnow)
-
+class Tack(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    horse_id = db.Column(db.Integer, nullable=False)
+    category = db.Column(db.String(50))  # Saddle, Bridle, Blanket, Boots, Pad, Other
+    brand = db.Column(db.String(100))
+    description = db.Column(db.String(200))
+    notes = db.Column(db.String(300))
 with app.app_context():
     db.create_all()
 
