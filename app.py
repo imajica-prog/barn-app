@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect
+I can see two problems — the with app.app_context() got stuck inside the FeedProfile class, and there's a missing newline at the bottom. Replace the entire contents of app.py with this clean version:
+pythonfrom flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 import os
@@ -31,14 +32,16 @@ class HealthRecord(db.Model):
     horse_id = db.Column(db.Integer, nullable=False)
     note = db.Column(db.String(200), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
 class Record(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     horse_id = db.Column(db.Integer, nullable=False)
-    type = db.Column(db.String(50))   # Vet, Farrier, Worming, etc.
-    title = db.Column(db.String(100)) # e.g. “Trim”, “Vaccination”
+    type = db.Column(db.String(50))
+    title = db.Column(db.String(100))
     details = db.Column(db.String(200))
     date = db.Column(db.DateTime, default=datetime.utcnow)
     next_due = db.Column(db.DateTime, nullable=True)
+
 class FeedProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     horse_id = db.Column(db.Integer, nullable=False)
@@ -49,9 +52,9 @@ class FeedProfile(db.Model):
     supplements = db.Column(db.String(300))
     notes = db.Column(db.String(300))
     cost_per_month = db.Column(db.Float)
-    date = db.Column(db.DateTime, default=datetime.utcnow) 
-    
-    with app.app_context():
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+
+with app.app_context():
     db.create_all()
 
 @app.route("/")
@@ -75,7 +78,6 @@ def horse_detail(id):
     health = HealthRecord.query.filter_by(horse_id=id).order_by(HealthRecord.date.desc()).all()
     appointments = Appointment.query.filter_by(horse_id=id).order_by(Appointment.date.desc()).all()
     records = Record.query.filter_by(horse_id=id).order_by(Record.date.desc()).all()
-
     return render_template(
         "horse_detail.html",
         horse=horse,
@@ -117,6 +119,7 @@ def add_appointment(horse_id):
         db.session.add(appt)
         db.session.commit()
     return redirect(f"/horse/{horse_id}")
+
 @app.route("/add_record/<int:horse_id>", methods=["POST"])
 def add_record(horse_id):
     type = request.form.get("type")
@@ -124,10 +127,8 @@ def add_record(horse_id):
     details = request.form.get("details")
     date_text = request.form.get("date")
     next_due_text = request.form.get("next_due")
-
-    fdate = datetime.strptime(date_text, "%Y-%m-%d") if date_text else datetime.utcnow()
+    date = datetime.strptime(date_text, "%Y-%m-%d") if date_text else datetime.utcnow()
     next_due = datetime.strptime(next_due_text, "%Y-%m-%d") if next_due_text else None
-
     record = Record(
         horse_id=horse_id,
         type=type,
@@ -136,11 +137,10 @@ def add_record(horse_id):
         date=date,
         next_due=next_due
     )
-
     db.session.add(record)
     db.session.commit()
-
     return redirect(f"/horse/{horse_id}")
+
 @app.route("/feed/<int:horse_id>")
 def feed(horse_id):
     horse = Horse.query.get_or_404(horse_id)
@@ -163,5 +163,7 @@ def add_feed(horse_id):
     )
     db.session.add(profile)
     db.session.commit()
-    return redirect(f"/feed/{horse_id}")if __name__ == "__main__":
+    return redirect(f"/feed/{horse_id}")
+
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
