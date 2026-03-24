@@ -1,40 +1,58 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="text-xl font-bold">{{ horse.name }}</h1>
-<div class="text-gray-500 mb-4">{{ horse.breed or '' }}</div>
-<a href="/feed/{{ horse.id }}" class="text-green-600 text-sm font-medium">🌾 Feed & Supplements</a>
-<a href="/tack/{{ horse.id }}" class="text-yellow-600 text-sm font-medium ml-4">🧴 Tack</a>
+<div class="flex justify-between items-center">
+  <h1 class="text-xl font-bold">{{ horse.name }}</h1>
+  <a href="/edit_horse/{{ horse.id }}" class="text-blue-500 text-sm">Edit</a>
+</div>
+<div class="text-gray-500 mb-2">{{ horse.breed or '' }}{% if horse.age %} · {{ horse.age }} yrs{% endif %}</div>
+<div class="flex gap-4 mb-4">
+  <a href="/feed/{{ horse.id }}" class="text-green-600 text-sm font-medium">🌾 Feed & Supplements</a>
+  <a href="/tack/{{ horse.id }}" class="text-yellow-600 text-sm font-medium">🧴 Tack</a>
+</div>
+
 <h2 class="mt-4 font-semibold">Health</h2>
 <form method="POST" action="/add_health/{{ horse.id }}">
-<input name="note" class="border p-2 w-full mb-2 rounded" placeholder="Health note">
-<button class="bg-green-500 text-white p-2 w-full rounded">Add</button>
+  <input name="note" class="border p-2 w-full mb-2 rounded" placeholder="Health note">
+  <button class="bg-green-500 text-white p-2 w-full rounded">Add</button>
 </form>
 {% if health %}
   {% for h in health %}
-  <div class="bg-white p-2 rounded shadow mb-2">
-    <div>{{ h.note }}</div>
-    <div class="text-xs text-gray-400">{{ h.date.strftime('%Y-%m-%d') }}</div>
+  <div class="bg-white p-2 rounded shadow mb-2 flex justify-between items-start">
+    <div>
+      <div>{{ h.note }}</div>
+      <div class="text-xs text-gray-400">{{ h.date.strftime('%Y-%m-%d') }}</div>
+    </div>
+    <form method="POST" action="/delete_health/{{ h.id }}">
+      <button class="text-red-400 text-sm ml-4">Remove</button>
+    </form>
   </div>
   {% endfor %}
 {% else %}
   <div class="bg-white p-2 rounded shadow mb-2 text-gray-500">No health notes yet.</div>
 {% endif %}
+
 <h2 class="mt-4 font-semibold">Appointments</h2>
 <form method="POST" action="/add_appointment/{{ horse.id }}">
-<input name="service" placeholder="Service" class="border p-2 w-full mb-2 rounded">
-<input type="date" name="date" class="border p-2 w-full mb-2 rounded">
-<button class="bg-blue-500 text-white p-2 w-full rounded">Add</button>
+  <input name="service" placeholder="Service" class="border p-2 w-full mb-2 rounded">
+  <input type="date" name="date" class="border p-2 w-full mb-2 rounded">
+  <button class="bg-blue-500 text-white p-2 w-full rounded">Add</button>
 </form>
 {% if appointments %}
   {% for a in appointments %}
-  <div class="bg-white p-2 rounded shadow mb-2">
-    <div>{{ a.service }}</div>
-    <div class="text-xs text-gray-400">{{ a.date.strftime('%Y-%m-%d') }}</div>
+  <div class="bg-white p-2 rounded shadow mb-2 flex justify-between items-start">
+    <div>
+      <div>{{ a.service }}</div>
+      <div class="text-xs text-gray-400">{{ a.date.strftime('%Y-%m-%d') }}</div>
+    </div>
+    <form method="POST" action="/delete_appointment/{{ a.id }}">
+      <button class="text-red-400 text-sm ml-4">Remove</button>
+    </form>
   </div>
   {% endfor %}
 {% else %}
   <div class="bg-white p-2 rounded shadow mb-2 text-gray-500">No appointments yet.</div>
 {% endif %}
+
 <h2 class="mt-4 font-semibold">Records</h2>
 <form method="POST" action="/add_record/{{ horse.id }}">
   <select name="type" class="border p-2 w-full mb-2 rounded">
@@ -59,15 +77,18 @@
 </form>
 {% if records %}
   {% for r in records %}
-  <div class="bg-white p-2 rounded shadow mb-2">
-    <div class="font-semibold">{{ r.type }} - {{ r.title }}</div>
-    <div class="text-sm">{{ r.details }}</div>
-    <div class="text-xs text-gray-400">
-      {{ r.date.strftime('%Y-%m-%d') }}
-      {% if r.next_due %}
-        → Next: {{ r.next_due.strftime('%Y-%m-%d') }}
-      {% endif %}
+  <div class="bg-white p-2 rounded shadow mb-2 flex justify-between items-start">
+    <div>
+      <div class="font-semibold">{{ r.type }} - {{ r.title }}</div>
+      <div class="text-sm">{{ r.details }}</div>
+      <div class="text-xs text-gray-400">
+        {{ r.date.strftime('%Y-%m-%d') }}
+        {% if r.next_due %}· Next: {{ r.next_due.strftime('%Y-%m-%d') }}{% endif %}
+      </div>
     </div>
+    <form method="POST" action="/delete_record/{{ r.id }}">
+      <button class="text-red-400 text-sm ml-4">Remove</button>
+    </form>
   </div>
   {% endfor %}
 {% else %}
