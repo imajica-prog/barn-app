@@ -125,6 +125,19 @@ def horse_detail(id):
     records = Record.query.filter_by(horse_id=id).order_by(Record.date.desc()).all()
     return render_template("horse_detail.html", horse=horse, health=health, appointments=appointments, records=records)
 
+@app.route("/edit_horse/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_horse(id):
+    horse = Horse.query.get_or_404(id)
+    if request.method == "POST":
+        horse.name = request.form.get("name", "").strip()
+        horse.breed = request.form.get("breed", "").strip()
+        age_value = request.form.get("age", "").strip()
+        horse.age = int(age_value) if age_value else None
+        db.session.commit()
+        return redirect(f"/horse/{id}")
+    return render_template("edit_horse.html", horse=horse)
+
 @app.route("/add_horse", methods=["GET", "POST"])
 @login_required
 def add_horse():
@@ -150,6 +163,15 @@ def add_health(horse_id):
         db.session.commit()
     return redirect(f"/horse/{horse_id}")
 
+@app.route("/delete_health/<int:record_id>", methods=["POST"])
+@login_required
+def delete_health(record_id):
+    record = HealthRecord.query.get_or_404(record_id)
+    horse_id = record.horse_id
+    db.session.delete(record)
+    db.session.commit()
+    return redirect(f"/horse/{horse_id}")
+
 @app.route("/add_appointment/<int:horse_id>", methods=["POST"])
 @login_required
 def add_appointment(horse_id):
@@ -160,6 +182,15 @@ def add_appointment(horse_id):
         appt = Appointment(horse_id=horse_id, service=service, date=date)
         db.session.add(appt)
         db.session.commit()
+    return redirect(f"/horse/{horse_id}")
+
+@app.route("/delete_appointment/<int:appt_id>", methods=["POST"])
+@login_required
+def delete_appointment(appt_id):
+    appt = Appointment.query.get_or_404(appt_id)
+    horse_id = appt.horse_id
+    db.session.delete(appt)
+    db.session.commit()
     return redirect(f"/horse/{horse_id}")
 
 @app.route("/add_record/<int:horse_id>", methods=["POST"])
@@ -181,6 +212,15 @@ def add_record(horse_id):
         next_due=next_due
     )
     db.session.add(record)
+    db.session.commit()
+    return redirect(f"/horse/{horse_id}")
+
+@app.route("/delete_record/<int:record_id>", methods=["POST"])
+@login_required
+def delete_record(record_id):
+    record = Record.query.get_or_404(record_id)
+    horse_id = record.horse_id
+    db.session.delete(record)
     db.session.commit()
     return redirect(f"/horse/{horse_id}")
 
@@ -207,6 +247,15 @@ def add_feed(horse_id):
         date=datetime.utcnow()
     )
     db.session.add(profile)
+    db.session.commit()
+    return redirect(f"/feed/{horse_id}")
+
+@app.route("/delete_feed/<int:profile_id>", methods=["POST"])
+@login_required
+def delete_feed(profile_id):
+    profile = FeedProfile.query.get_or_404(profile_id)
+    horse_id = profile.horse_id
+    db.session.delete(profile)
     db.session.commit()
     return redirect(f"/feed/{horse_id}")
 
