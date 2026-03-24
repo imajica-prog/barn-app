@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-sm mx-auto mt-16">
+  <h1 class="text-2xl font-bold mb-6 text-center">Barn App Login</h1>
+  {% if error %}
+  <div class="bg-red-100 text-red-700 p-3 rounded mb-4">{{ error }}</div>
+  {% endif %}
+  <form method="POST" action="/login">
+    <input name="username" placeholder="Username" class="border p-2 w-full mb-3 rounded">
+    <input name="password" type="password" placeholder="Password" class="border p-2 w-full mb-3 rounded">
+    <button class="bg-blue-500 text-white p-2 w-full rounded">Log In</button>
+  </form>
+</div>
+{% endblock %}
