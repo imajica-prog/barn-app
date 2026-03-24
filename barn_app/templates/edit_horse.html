@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold">Edit {{ horse.name }}</h1>
+<a href="/horse/{{ horse.id }}" class="text-blue-500 text-sm">← Back</a>
+<form method="POST" action="/edit_horse/{{ horse.id }}" class="mt-4">
+  <input name="name" value="{{ horse.name }}" class="border p-2 w-full mb-2 rounded">
+  <input name="breed" value="{{ horse.breed or '' }}" placeholder="Breed" class="border p-2 w-full mb-2 rounded">
+  <input name="age" value="{{ horse.age or '' }}" placeholder="Age" type="number" class="border p-2 w-full mb-2 rounded">
+  <button class="bg-blue-500 text-white p-2 w-full rounded">Save Changes</button>
+</form>
+{% endblock %}
