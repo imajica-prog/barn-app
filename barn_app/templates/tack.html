@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold">{{ horse.name }} — Tack</h1>
+<a href="/horse/{{ horse.id }}" class="text-blue-500 text-sm">← Back to {{ horse.name }}</a>
+
+<h2 class="mt-6 font-semibold">Add Tack Item</h2>
+<form method="POST" action="/add_tack/{{ horse.id }}">
+  <select name="category" class="border p-2 w-full mb-2 rounded">
+    <option value="" disabled selected>Select category</option>
+    <option>Saddle</option>
+    <option>Pad</option>
+    <option>Bridle</option>
+    <option>Blanket / Sheet</option>
+    <option>Boots / Wraps</option>
+    <option>Other</option>
+  </select>
+  <input name="brand" placeholder="Brand" class="border p-2 w-full mb-2 rounded">
+  <input name="description" placeholder="Description (e.g. 17.5 medium tree, French link bit)" class="border p-2 w-full mb-2 rounded">
+  <textarea name="notes" placeholder="Fit notes or other details" class="border p-2 w-full mb-2 rounded"></textarea>
+  <button class="bg-yellow-500 text-white p-2 w-full rounded">Add Tack Item</button>
+</form>
+
+{% if items %}
+  {% for item in items %}
+  <div class="bg-white p-4 rounded shadow mb-3 mt-4 flex justify-between items-start">
+    <div>
+      <div class="font-semibold">{{ item.category }}{% if item.brand %} — {{ item.brand }}{% endif %}</div>
+      {% if item.description %}
+      <div class="text-sm mt-1">{{ item.description }}</div>
+      {% endif %}
+      {% if item.notes %}
+      <div class="text-sm text-gray-500 mt-1">{{ item.notes }}</div>
+      {% endif %}
+    </div>
+    <form method="POST" action="/delete_tack/{{ item.id }}">
+      <button class="text-red-400 text-sm ml-4">Remove</button>
+    </form>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="bg-white p-2 rounded shadow mt-4 text-gray-500">No tack items yet.</div>
+{% endif %}
+{% endblock %}
