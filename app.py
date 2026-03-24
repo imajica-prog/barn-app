@@ -39,7 +39,17 @@ class Record(db.Model):
     details = db.Column(db.String(200))
     date = db.Column(db.DateTime, default=datetime.utcnow)
     next_due = db.Column(db.DateTime, nullable=True)
-with app.app_context():
+class FeedProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    horse_id = db.Column(db.Integer, nullable=False)
+    hay_type = db.Column(db.String(100))
+    hay_amount = db.Column(db.String(100))
+    grain_type = db.Column(db.String(100))
+    grain_amount = db.Column(db.String(100))
+    supplements = db.Column(db.String(300))
+    notes = db.Column(db.String(300))
+    cost_per_month = db.Column(db.Float)
+    date = db.Column(db.DateTime, default=datetime.utcnow)with app.app_context():
     db.create_all()
 
 @app.route("/")
