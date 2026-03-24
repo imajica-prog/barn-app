@@ -1,9 +1,11 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 import os
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
 
 database_url = os.getenv("DATABASE_URL", "sqlite:///database.db")
 if database_url.startswith("postgres://"):
@@ -11,8 +13,22 @@ if database_url.startswith("postgres://"):
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)
 
 db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
+
+class User(UserMixin):
+    id = 1
+    def get_id(self):
+        return "1"
+
+@login_manager.user_loader
+def load_user(user_id):
+    if user_id == "1":
+        return User()
+    return None
 
 class Horse(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -52,17 +68,39 @@ class FeedProfile(db.Model):
     notes = db.Column(db.String(300))
     cost_per_month = db.Column(db.Float)
     date = db.Column(db.DateTime, default=datetime.utcnow)
+
 class Tack(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     horse_id = db.Column(db.Integer, nullable=False)
-    category = db.Column(db.String(50))  # Saddle, Bridle, Blanket, Boots, Pad, Other
+    category = db.Column(db.String(50))
     brand = db.Column(db.String(100))
     description = db.Column(db.String(200))
     notes = db.Column(db.String(300))
+
 with app.app_context():
     db.create_all()
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        if username == os.getenv("APP_USERNAME", "admin") and password == os.getenv("APP_PASSWORD", "changeme"):
+            user = User()
+            login_user(user, remember=True)
+            return redirect("/")
+        error = "Invalid username or password"
+    return render_template("login.html", error=error)
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect("/login")
+
 @app.route("/")
+@login_required
 def dashboard():
     today = datetime.utcnow()
     soon = today + timedelta(days=7)
@@ -73,25 +111,22 @@ def dashboard():
     return render_template("dashboard.html", upcoming=upcoming)
 
 @app.route("/horses")
+@login_required
 def horses():
     horses = Horse.query.order_by(Horse.name.asc()).all()
     return render_template("horses.html", horses=horses)
 
 @app.route("/horse/<int:id>")
+@login_required
 def horse_detail(id):
     horse = Horse.query.get_or_404(id)
     health = HealthRecord.query.filter_by(horse_id=id).order_by(HealthRecord.date.desc()).all()
     appointments = Appointment.query.filter_by(horse_id=id).order_by(Appointment.date.desc()).all()
     records = Record.query.filter_by(horse_id=id).order_by(Record.date.desc()).all()
-    return render_template(
-        "horse_detail.html",
-        horse=horse,
-        health=health,
-        appointments=appointments,
-        records=records
-    )
+    return render_template("horse_detail.html", horse=horse, health=health, appointments=appointments, records=records)
 
 @app.route("/add_horse", methods=["GET", "POST"])
+@login_required
 def add_horse():
     if request.method == "POST":
         age_value = request.form.get("age", "").strip()
@@ -106,6 +141,7 @@ def add_horse():
     return render_template("add_horse.html")
 
 @app.route("/add_health/<int:horse_id>", methods=["POST"])
+@login_required
 def add_health(horse_id):
     note = request.form.get("note", "").strip()
     if note:
@@ -115,6 +151,7 @@ def add_health(horse_id):
     return redirect(f"/horse/{horse_id}")
 
 @app.route("/add_appointment/<int:horse_id>", methods=["POST"])
+@login_required
 def add_appointment(horse_id):
     service = request.form.get("service", "").strip()
     date_text = request.form.get("date", "").strip()
@@ -126,6 +163,7 @@ def add_appointment(horse_id):
     return redirect(f"/horse/{horse_id}")
 
 @app.route("/add_record/<int:horse_id>", methods=["POST"])
+@login_required
 def add_record(horse_id):
     type = request.form.get("type")
     title = request.form.get("title")
@@ -147,12 +185,14 @@ def add_record(horse_id):
     return redirect(f"/horse/{horse_id}")
 
 @app.route("/feed/<int:horse_id>")
+@login_required
 def feed(horse_id):
     horse = Horse.query.get_or_404(horse_id)
     profiles = FeedProfile.query.filter_by(horse_id=horse_id).order_by(FeedProfile.date.desc()).all()
     return render_template("feed.html", horse=horse, profiles=profiles)
 
 @app.route("/add_feed/<int:horse_id>", methods=["POST"])
+@login_required
 def add_feed(horse_id):
     cost_text = request.form.get("cost_per_month", "").strip()
     profile = FeedProfile(
@@ -169,13 +209,16 @@ def add_feed(horse_id):
     db.session.add(profile)
     db.session.commit()
     return redirect(f"/feed/{horse_id}")
+
 @app.route("/tack/<int:horse_id>")
+@login_required
 def tack(horse_id):
     horse = Horse.query.get_or_404(horse_id)
     items = Tack.query.filter_by(horse_id=horse_id).all()
     return render_template("tack.html", horse=horse, items=items)
 
 @app.route("/add_tack/<int:horse_id>", methods=["POST"])
+@login_required
 def add_tack(horse_id):
     item = Tack(
         horse_id=horse_id,
@@ -189,11 +232,14 @@ def add_tack(horse_id):
     return redirect(f"/tack/{horse_id}")
 
 @app.route("/delete_tack/<int:item_id>", methods=["POST"])
+@login_required
 def delete_tack(item_id):
     item = Tack.query.get_or_404(item_id)
     horse_id = item.horse_id
     db.session.delete(item)
     db.session.commit()
     return redirect(f"/tack/{horse_id}")
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
+
