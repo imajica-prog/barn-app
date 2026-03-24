@@ -2,13 +2,11 @@
 {% block content %}
 <h1 class="text-xl font-bold">{{ horse.name }}</h1>
 <div class="text-gray-500 mb-4">{{ horse.breed or '' }}</div>
-
 <h2 class="mt-4 font-semibold">Health</h2>
 <form method="POST" action="/add_health/{{ horse.id }}">
 <input name="note" class="border p-2 w-full mb-2 rounded" placeholder="Health note">
 <button class="bg-green-500 text-white p-2 w-full rounded">Add</button>
 </form>
-
 {% if health %}
   {% for h in health %}
   <div class="bg-white p-2 rounded shadow mb-2">
@@ -19,14 +17,12 @@
 {% else %}
   <div class="bg-white p-2 rounded shadow mb-2 text-gray-500">No health notes yet.</div>
 {% endif %}
-
 <h2 class="mt-4 font-semibold">Appointments</h2>
 <form method="POST" action="/add_appointment/{{ horse.id }}">
 <input name="service" placeholder="Service" class="border p-2 w-full mb-2 rounded">
 <input type="date" name="date" class="border p-2 w-full mb-2 rounded">
 <button class="bg-blue-500 text-white p-2 w-full rounded">Add</button>
 </form>
-
 {% if appointments %}
   {% for a in appointments %}
   <div class="bg-white p-2 rounded shadow mb-2">
@@ -36,12 +32,13 @@
   {% endfor %}
 {% else %}
   <div class="bg-white p-2 rounded shadow mb-2 text-gray-500">No appointments yet.</div>
-{% endif %}<h2 class="mt-4 font-semibold">Records</h2>
-
+{% endif %}
+<h2 class="mt-4 font-semibold">Records</h2>
 <form method="POST" action="/add_record/{{ horse.id }}">
   <select name="type" class="border p-2 w-full mb-2 rounded">
+    <option value="" disabled selected>Select type</option>  ← ADD THIS LINE
     <option>Vet</option>
-    <option>Joint Injection</option>
+    <option>Joint Injection</option>  ← ADD THIS LINE
     <option>Farrier</option>
     <option>Worming</option>
     <option>Feed</option>
@@ -52,17 +49,14 @@
     <option>Medication</option>
     <option>Note</option>
   </select>
-
   <input name="title" placeholder="What was done" class="border p-2 w-full mb-2 rounded">
   <input name="details" placeholder="Details" class="border p-2 w-full mb-2 rounded">
   <input type="date" name="date" class="border p-2 w-full mb-2 rounded">
   <input type="date" name="next_due" class="border p-2 w-full mb-2 rounded">
-
   <button class="bg-purple-500 text-white p-2 w-full rounded">
     Add Record
   </button>
 </form>
-
 {% if records %}
   {% for r in records %}
   <div class="bg-white p-2 rounded shadow mb-2">
