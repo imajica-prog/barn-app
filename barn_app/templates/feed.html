@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold">{{ horse.name }} — Feed & Supplements</h1>
+<a href="/horse/{{ horse.id }}" class="text-blue-500 text-sm">← Back to {{ horse.name }}</a>
+
+<h2 class="mt-6 font-semibold">Add Feed Profile</h2>
+<form method="POST" action="/add_feed/{{ horse.id }}">
+  <input name="hay_type" placeholder="Hay type (e.g. Timothy, Orchard)" class="border p-2 w-full mb-2 rounded">
+  <input name="hay_amount" placeholder="Hay amount (e.g. 2 flakes 2x/day)" class="border p-2 w-full mb-2 rounded">
+  <input name="grain_type" placeholder="Grain type (e.g. Senior, Ulcer Guard)" class="border p-2 w-full mb-2 rounded">
+  <input name="grain_amount" placeholder="Grain amount (e.g. 2 lbs 2x/day)" class="border p-2 w-full mb-2 rounded">
+  <input name="supplements" placeholder="Supplements (e.g. MSM, Vitamin E, Previcox)" class="border p-2 w-full mb-2 rounded">
+  <textarea name="notes" placeholder="Special instructions or notes" class="border p-2 w-full mb-2 rounded"></textarea>
+  <input name="cost_per_month" type="number" step="0.01" placeholder="Estimated cost per month ($)" class="border p-2 w-full mb-2 rounded">
+  <button class="bg-green-500 text-white p-2 w-full rounded">Save Feed Profile</button>
+</form>
+
+{% if profiles %}
+  {% for p in profiles %}
+  <div class="bg-white p-4 rounded shadow mb-4 mt-4">
+    <div class="text-xs text-gray-400 mb-2">{{ p.date.strftime('%Y-%m-%d') }}</div>
+    {% if p.hay_type or p.hay_amount %}
+    <div class="mb-1"><span class="font-semibold">Hay:</span> {{ p.hay_type }} — {{ p.hay_amount }}</div>
+    {% endif %}
+    {% if p.grain_type or p.grain_amount %}
+    <div class="mb-1"><span class="font-semibold">Grain:</span> {{ p.grain_type }} — {{ p.grain_amount }}</div>
+    {% endif %}
+    {% if p.supplements %}
+    <div class="mb-1"><span class="font-semibold">Supplements:</span> {{ p.supplements }}</div>
+    {% endif %}
+    {% if p.notes %}
+    <div class="mb-1"><span class="font-semibold">Notes:</span> {{ p.notes }}</div>
+    {% endif %}
+    {% if p.cost_per_month %}
+    <div class="mb-1"><span class="font-semibold">Cost/month:</span> ${{ "%.2f"|format(p.cost_per_month) }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="bg-white p-2 rounded shadow mt-4 text-gray-500">No feed profiles yet.</div>
+{% endif %}
+{% endblock %}
