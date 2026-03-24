@@ -18,7 +18,12 @@
 {% if profiles %}
   {% for p in profiles %}
   <div class="bg-white p-4 rounded shadow mb-4 mt-4">
-    <div class="text-xs text-gray-400 mb-2">{{ p.date.strftime('%Y-%m-%d') }}</div>
+    <div class="flex justify-between items-start">
+      <div class="text-xs text-gray-400 mb-2">{{ p.date.strftime('%Y-%m-%d') }}</div>
+      <form method="POST" action="/delete_feed/{{ p.id }}">
+        <button class="text-red-400 text-sm">Remove</button>
+      </form>
+    </div>
     {% if p.hay_type or p.hay_amount %}
     <div class="mb-1"><span class="font-semibold">Hay:</span> {{ p.hay_type }} — {{ p.hay_amount }}</div>
     {% endif %}
