@@ -171,6 +171,31 @@ def add_feed(horse_id):
     db.session.add(profile)
     db.session.commit()
     return redirect(f"/feed/{horse_id}")
+@app.route("/tack/<int:horse_id>")
+def tack(horse_id):
+    horse = Horse.query.get_or_404(horse_id)
+    items = Tack.query.filter_by(horse_id=horse_id).all()
+    return render_template("tack.html", horse=horse, items=items)
 
+@app.route("/add_tack/<int:horse_id>", methods=["POST"])
+def add_tack(horse_id):
+    item = Tack(
+        horse_id=horse_id,
+        category=request.form.get("category", "").strip(),
+        brand=request.form.get("brand", "").strip(),
+        description=request.form.get("description", "").strip(),
+        notes=request.form.get("notes", "").strip()
+    )
+    db.session.add(item)
+    db.session.commit()
+    return redirect(f"/tack/{horse_id}")
+
+@app.route("/delete_tack/<int:item_id>", methods=["POST"])
+def delete_tack(item_id):
+    item = Tack.query.get_or_404(item_id)
+    horse_id = item.horse_id
+    db.session.delete(item)
+    db.session.commit()
+    return redirect(f"/tack/{horse_id}")
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
