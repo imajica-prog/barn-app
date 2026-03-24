@@ -69,7 +69,29 @@ def add_appointment(horse_id):
     db.session.add(appt)
     db.session.commit()
     return redirect(f'/horse/{horse_id}')
+@app.route("/feed/<int:horse_id>")
+def feed(horse_id):
+    horse = Horse.query.get_or_404(horse_id)
+    profiles = FeedProfile.query.filter_by(horse_id=horse_id).order_by(FeedProfile.date.desc()).all()
+    return render_template("feed.html", horse=horse, profiles=profiles)
 
+@app.route("/add_feed/<int:horse_id>", methods=["POST"])
+def add_feed(horse_id):
+    cost_text = request.form.get("cost_per_month", "").strip()
+    profile = FeedProfile(
+        horse_id=horse_id,
+        hay_type=request.form.get("hay_type", "").strip(),
+        hay_amount=request.form.get("hay_amount", "").strip(),
+        grain_type=request.form.get("grain_type", "").strip(),
+        grain_amount=request.form.get("grain_amount", "").strip(),
+        supplements=request.form.get("supplements", "").strip(),
+        notes=request.form.get("notes", "").strip(),
+        cost_per_month=float(cost_text) if cost_text else None,
+        date=datetime.utcnow()
+    )
+    db.session.add(profile)
+    db.session.commit()
+    return redirect(f"/feed/{horse_id}")
 if __name__ == '__main__':
    class FeedProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
