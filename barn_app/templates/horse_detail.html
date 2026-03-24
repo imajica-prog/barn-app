@@ -3,6 +3,7 @@
 <h1 class="text-xl font-bold">{{ horse.name }}</h1>
 <div class="text-gray-500 mb-4">{{ horse.breed or '' }}</div>
 <a href="/feed/{{ horse.id }}" class="text-green-600 text-sm font-medium">🌾 Feed & Supplements</a>
+<a href="/tack/{{ horse.id }}" class="text-yellow-600 text-sm font-medium ml-4">🧴 Tack</a>
 <h2 class="mt-4 font-semibold">Health</h2>
 <form method="POST" action="/add_health/{{ horse.id }}">
 <input name="note" class="border p-2 w-full mb-2 rounded" placeholder="Health note">
