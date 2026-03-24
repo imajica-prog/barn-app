@@ -49,7 +49,9 @@ class FeedProfile(db.Model):
     supplements = db.Column(db.String(300))
     notes = db.Column(db.String(300))
     cost_per_month = db.Column(db.Float)
-    date = db.Column(db.DateTime, default=datetime.utcnow)with app.app_context():
+    date = db.Column(db.DateTime, default=datetime.utcnow) 
+    
+    with app.app_context():
     db.create_all()
 
 @app.route("/")
@@ -123,7 +125,7 @@ def add_record(horse_id):
     date_text = request.form.get("date")
     next_due_text = request.form.get("next_due")
 
-    date = datetime.strptime(date_text, "%Y-%m-%d") if date_text else datetime.utcnow()
+    fdate = datetime.strptime(date_text, "%Y-%m-%d") if date_text else datetime.utcnow()
     next_due = datetime.strptime(next_due_text, "%Y-%m-%d") if next_due_text else None
 
     record = Record(
