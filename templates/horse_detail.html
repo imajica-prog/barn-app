@@ -34,7 +34,7 @@
 <h2 class="mt-4 font-semibold">Appointments</h2>
 <form method="POST" action="/add_appointment/{{ horse.id }}">
   <input name="service" placeholder="Service" class="border p-2 w-full mb-2 rounded">
-  <input type="date" name="date" class="border p-2 w-full mb-2 rounded">
+ <input type="date" name="date" autocomplete="off" class="border p-2 w-full mb-2 rounded">
   <button class="bg-blue-500 text-white p-2 w-full rounded">Add</button>
 </form>
 {% if appointments %}
