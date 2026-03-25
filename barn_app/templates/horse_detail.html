@@ -71,8 +71,8 @@
   </select>
   <input name="title" placeholder="What was done" class="border p-2 w-full mb-2 rounded">
   <input name="details" placeholder="Details" class="border p-2 w-full mb-2 rounded">
-  <input type="date" name="date" class="border p-2 w-full mb-2 rounded">
-  <input type="date" name="next_due" placeholder="Next due date" class="border p-2 w-full mb-2 rounded">
+<input type="date" name="date" autocomplete="off" class="border p-2 w-full mb-2 rounded">
+<input type="date" name="next_due" autocomplete="off" placeholder="Next due date" class="border p-2 w-full mb-2 rounded">
   <button class="bg-purple-500 text-white p-2 w-full rounded">Add Record</button>
 </form>
 {% if records %}
