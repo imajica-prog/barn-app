@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-1">
+  <h1 class="text-xl font-bold">{{ horse.name }}</h1>
+  <a href="/horse/{{ horse.id }}" class="text-blue-500 text-sm">← Back</a>
+</div>
+<div class="text-gray-500 mb-4">Farrier History</div>
+
+<h2 class="font-semibold mb-2">Add Visit</h2>
+<form method="POST" action="/add_farrier/{{ horse.id }}">
+  <input type="date" name="date" autocomplete="off" class="border p-2 w-full mb-2 rounded">
+  <input name="farrier" placeholder="Farrier name" class="border p-2 w-full mb-2 rounded">
+  <select name="service_type" class="border p-2 w-full mb-2 rounded">
+    <option value="" disabled selected>Service type</option>
+    <option>Trim</option>
+    <option>Shoe</option>
+    <option>Reset</option>
+    <option>Pull shoes</option>
+    <option>Front shoes only</option>
+    <option>Corrective</option>
+    <option>Other</option>
+  </select>
+  <input name="cost" placeholder="Cost ($)" type="number" step="0.01" class="border p-2 w-full mb-2 rounded">
+  <input type="date" name="next_due" autocomplete="off" class="border p-2 w-full mb-2 rounded">
+  <input name="notes" placeholder="Notes" class="border p-2 w-full mb-2 rounded">
+  <button class="bg-orange-500 text-white p-2 w-full rounded">Add Visit</button>
+</form>
+
+<h2 class="mt-6 font-semibold mb-2">Visit History</h2>
+{% if visits %}
+  {% for v in visits %}
+  <div class="bg-white p-2 rounded shadow mb-2 flex justify-between items-start">
+    <div>
+      <div class="font-semibold">{{ v.service_type }}{% if v.farrier %} · {{ v.farrier }}{% endif %}</div>
+      {% if v.cost %}<div class="text-sm">${{ "%.2f"|format(v.cost) }}</div>{% endif %}
+      {% if v.notes %}<div class="text-sm">{{ v.notes }}</div>{% endif %}
+      <div class="text-xs text-gray-400">
+        {{ v.date.strftime('%Y-%m-%d') }}
+        {% if v.next_due %} · Next due: {{ v.next_due.strftime('%Y-%m-%d') }}{% endif %}
+      </div>
+    </div>
+    <form method="POST" action="/delete_farrier/{{ v.id }}">
+      <button class="text-red-400 text-sm ml-4">Remove</button>
+    </form>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="bg-white p-2 rounded shadow mb-2 text-gray-500">No farrier visits yet.</div>
+{% endif %}
+{% endblock %}
