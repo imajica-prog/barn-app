@@ -313,9 +313,7 @@ def submit_waiver():
     if not data:
         return jsonify({"error": "No data received"}), 400
 
-    required = ["fullName", "dob", "phone", "email", "ecName", "ecPhone", "sigDate", "signature"]
-    if any(field not in data or not data[field] for field in required):
-        return jsonify({"error": "Missing required fields"}), 400
+      required = ["fullName", "address", "phone", "email", "initials", "sigDate", "signature"]
 
     gmail_user = os.environ.get("GMAIL_USER")
     gmail_pass = os.environ.get("GMAIL_APP_PASSWORD")
@@ -333,16 +331,17 @@ def submit_waiver():
 
     submitted_at = data.get("submittedAt", datetime.utcnow().isoformat())
 
-    body_text = (
-        f"New signed liability waiver — Imajica Farm\n\n"
+       body_text = (
+        f"New signed release — Imajica, LLC\n\n"
         f"Name: {data['fullName']}\n"
-        f"Date of birth: {data['dob']}\n"
+        f"Address: {data['address']}\n"
         f"Phone: {data['phone']}\n"
         f"Email: {data['email']}\n"
-        f"Emergency contact: {data['ecName']} ({data['ecPhone']})\n"
+        f"Initials: {data['initials']}\n"
         f"Date signed: {data['sigDate']}\n"
         f"Submitted: {submitted_at}\n\n"
         f"Signature image is attached.\n"
+    )
     )
 
     msg = MIMEMultipart()
