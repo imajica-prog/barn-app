@@ -1,8 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_cors import cross_origin
 from datetime import datetime, timedelta
 import os
+import base64
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
@@ -18,6 +24,11 @@ app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
+
+# Waiver page origin allowed to POST to /submit_waiver.
+# "*" works for testing; once the waiver page has a permanent URL,
+# replace this with that exact URL (e.g. "https://imajica.net") to lock it down.
+WAIVER_ALLOWED_ORIGIN = "*"
 
 class User(UserMixin):
     id = 1
@@ -288,6 +299,72 @@ def delete_tack(item_id):
     db.session.delete(item)
     db.session.commit()
     return redirect(f"/tack/{horse_id}")
+
+
+# ---------------------------------------------------------------------------
+# Waiver submission (public, unauthenticated — this is filled out by visitors,
+# not staff, so it deliberately has no @login_required)
+# ---------------------------------------------------------------------------
+
+@app.route("/submit_waiver", methods=["POST"])
+@cross_origin(origins=WAIVER_ALLOWED_ORIGIN)
+def submit_waiver():
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({"error": "No data received"}), 400
+
+    required = ["fullName", "dob", "phone", "email", "ecName", "ecPhone", "sigDate", "signature"]
+    if any(field not in data or not data[field] for field in required):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    gmail_user = os.environ.get("GMAIL_USER")
+    gmail_pass = os.environ.get("GMAIL_APP_PASSWORD")
+    to_email = os.environ.get("WAIVER_TO_EMAIL", "info@imajica.net")
+
+    if not gmail_user or not gmail_pass:
+        return jsonify({"error": "Email is not configured on the server"}), 500
+
+    sig_data_url = data["signature"]
+    try:
+        sig_b64 = sig_data_url.split(",", 1)[1]
+        sig_bytes = base64.b64decode(sig_b64)
+    except Exception:
+        return jsonify({"error": "Invalid signature data"}), 400
+
+    submitted_at = data.get("submittedAt", datetime.utcnow().isoformat())
+
+    body_text = (
+        f"New signed liability waiver — Imajica Farm\n\n"
+        f"Name: {data['fullName']}\n"
+        f"Date of birth: {data['dob']}\n"
+        f"Phone: {data['phone']}\n"
+        f"Email: {data['email']}\n"
+        f"Emergency contact: {data['ecName']} ({data['ecPhone']})\n"
+        f"Date signed: {data['sigDate']}\n"
+        f"Submitted: {submitted_at}\n\n"
+        f"Signature image is attached.\n"
+    )
+
+    msg = MIMEMultipart()
+    msg["Subject"] = f"Signed waiver — {data['fullName']}"
+    msg["From"] = gmail_user
+    msg["To"] = to_email
+    msg.attach(MIMEText(body_text, "plain"))
+
+    sig_image = MIMEImage(sig_bytes, name=f"signature-{data['fullName'].replace(' ', '-').lower()}.png")
+    msg.attach(sig_image)
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(gmail_user, gmail_pass)
+            server.sendmail(gmail_user, [to_email], msg.as_string())
+    except Exception as e:
+        app.logger.error(f"Failed to send waiver email: {e}")
+        return jsonify({"error": "Failed to send email"}), 502
+
+    return jsonify({"status": "sent"}), 200
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
