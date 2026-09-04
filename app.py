@@ -88,6 +88,15 @@ class Tack(db.Model):
     description = db.Column(db.String(200))
     notes = db.Column(db.String(300))
 
+class FarrierVisit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    horse_id = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    farrier = db.Column(db.String(100))
+    service_type = db.Column(db.String(100))
+    cost = db.Column(db.Float)
+    next_due = db.Column(db.DateTime, nullable=True)
+    notes = db.Column(db.String(300))
 with app.app_context():
     db.create_all()
 
@@ -300,6 +309,41 @@ def delete_tack(item_id):
     db.session.commit()
     return redirect(f"/tack/{horse_id}")
 
+@app.route("/farrier/<int:horse_id>")
+@login_required
+def farrier(horse_id):
+    horse = Horse.query.get_or_404(horse_id)
+    visits = FarrierVisit.query.filter_by(horse_id=horse_id).order_by(FarrierVisit.date.desc()).all()
+    return render_template("farrier.html", horse=horse, visits=visits)
+
+@app.route("/add_farrier/<int:horse_id>", methods=["POST"])
+@login_required
+def add_farrier(horse_id):
+    date_text = request.form.get("date", "").strip()
+    next_due_text = request.form.get("next_due", "").strip()
+    cost_text = request.form.get("cost", "").strip()
+    visit = FarrierVisit(
+        horse_id=horse_id,
+        date=datetime.strptime(date_text, "%Y-%m-%d") if date_text else datetime.utcnow(),
+        farrier=request.form.get("farrier", "").strip(),
+        service_type=request.form.get("service_type", "").strip(),
+        cost=float(cost_text) if cost_text else None,
+        next_due=datetime.strptime(next_due_text, "%Y-%m-%d") if next_due_text else None,
+        notes=request.form.get("notes", "").strip()
+    )
+    db.session.add(visit)
+    db.session.commit()
+    return redirect(f"/farrier/{horse_id}")
+
+@app.route("/delete_farrier/<int:visit_id>", methods=["POST"])
+@login_required
+def delete_farrier(visit_id):
+    visit = FarrierVisit.query.get_or_404(visit_id)
+    horse_id = visit.horse_id
+    db.session.delete(visit)
+    db.session.commit()
+    return redirect(f"/farrier/{horse_id}")
+
 
 # ---------------------------------------------------------------------------
 # Waiver submission (public, unauthenticated — this is filled out by visitors,
@@ -313,7 +357,9 @@ def submit_waiver():
     if not data:
         return jsonify({"error": "No data received"}), 400
 
-       required = ["fullName", "address", "phone", "email", "initials", "sigDate", "signature"]
+    required = ["fullName", "address", "phone", "email", "initials", "sigDate", "signature"]
+    if any(field not in data or not data[field] for field in required):
+        return jsonify({"error": "Missing required fields"}), 400
 
     gmail_user = os.environ.get("GMAIL_USER")
     gmail_pass = os.environ.get("GMAIL_APP_PASSWORD")
@@ -331,7 +377,7 @@ def submit_waiver():
 
     submitted_at = data.get("submittedAt", datetime.utcnow().isoformat())
 
-       body_text = (
+    body_text = (
         f"New signed release — Imajica, LLC\n\n"
         f"Name: {data['fullName']}\n"
         f"Address: {data['address']}\n"
@@ -344,7 +390,7 @@ def submit_waiver():
     )
 
     msg = MIMEMultipart()
-    msg["Subject"] = f"Signed waiver — {data['fullName']}"
+    msg["Subject"] = f"Signed release — {data['fullName']}"
     msg["From"] = gmail_user
     msg["To"] = to_email
     msg.attach(MIMEText(body_text, "plain"))
