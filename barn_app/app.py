@@ -408,6 +408,8 @@ def submit_waiver():
         headers={
             "Authorization": f"Bearer {resend_key}",
             "Content-Type": "application/json",
+            "User-Agent": "imajica-barn-app/1.0",
+            "Accept": "application/json",
         },
         method="POST",
     )
@@ -416,8 +418,11 @@ def submit_waiver():
         with urllib.request.urlopen(req, timeout=20) as resp:
             resp.read()
     except urllib.error.HTTPError as e:
-        detail = e.read().decode("utf-8", "replace")
-        app.logger.error(f"Resend rejected the waiver email ({e.code}): {detail}")
+        detail = e.read().decode("utf-8", "replace")[:800]
+        hdrs = dict(e.headers) if e.headers else {}
+        app.logger.error(
+            f"Resend rejected the waiver email ({e.code}): {detail} | headers={hdrs}"
+        )
         return jsonify({"error": "Failed to send email"}), 502
     except Exception as e:
         app.logger.error(f"Failed to send waiver email: {e}")
