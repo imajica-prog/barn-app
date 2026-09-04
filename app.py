@@ -5,10 +5,9 @@ from flask_cors import cross_origin
 from datetime import datetime, timedelta
 import os
 import base64
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
+import json
+import urllib.request
+import urllib.error
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
@@ -361,24 +360,23 @@ def submit_waiver():
     if any(field not in data or not data[field] for field in required):
         return jsonify({"error": "Missing required fields"}), 400
 
-    gmail_user = os.environ.get("GMAIL_USER")
-    gmail_pass = os.environ.get("GMAIL_APP_PASSWORD")
+    resend_key = os.environ.get("RESEND_API_KEY")
     to_email = os.environ.get("WAIVER_TO_EMAIL", "info@imajica.net")
 
-    if not gmail_user or not gmail_pass:
+    if not resend_key:
         return jsonify({"error": "Email is not configured on the server"}), 500
 
     sig_data_url = data["signature"]
     try:
         sig_b64 = sig_data_url.split(",", 1)[1]
-        sig_bytes = base64.b64decode(sig_b64)
+        base64.b64decode(sig_b64)  # validate it decodes
     except Exception:
         return jsonify({"error": "Invalid signature data"}), 400
 
     submitted_at = data.get("submittedAt", datetime.utcnow().isoformat())
 
     body_text = (
-        f"New signed release — Imajica, LLC\n\n"
+        "New signed release - Imajica, LLC\n\n"
         f"Name: {data['fullName']}\n"
         f"Address: {data['address']}\n"
         f"Phone: {data['phone']}\n"
@@ -386,23 +384,41 @@ def submit_waiver():
         f"Initials: {data['initials']}\n"
         f"Date signed: {data['sigDate']}\n"
         f"Submitted: {submitted_at}\n\n"
-        f"Signature image is attached.\n"
+        "Signature image is attached.\n"
     )
 
-    msg = MIMEMultipart()
-    msg["Subject"] = f"Signed release — {data['fullName']}"
-    msg["From"] = gmail_user
-    msg["To"] = to_email
-    msg.attach(MIMEText(body_text, "plain"))
+    safe_name = data["fullName"].replace(" ", "-").lower()
 
-    sig_image = MIMEImage(sig_bytes, name=f"signature-{data['fullName'].replace(' ', '-').lower()}.png")
-    msg.attach(sig_image)
+    payload = {
+        "from": "Imajica Waivers <onboarding@resend.dev>",
+        "to": [to_email],
+        "subject": f"Signed release - {data['fullName']}",
+        "text": body_text,
+        "attachments": [
+            {
+                "filename": f"signature-{safe_name}.png",
+                "content": sig_b64,
+            }
+        ],
+    }
+
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {resend_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
 
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, [to_email], msg.as_string())
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            resp.read()
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")
+        app.logger.error(f"Resend rejected the waiver email ({e.code}): {detail}")
+        return jsonify({"error": "Failed to send email"}), 502
     except Exception as e:
         app.logger.error(f"Failed to send waiver email: {e}")
         return jsonify({"error": "Failed to send email"}), 502
