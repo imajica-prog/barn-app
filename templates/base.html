@@ -10,5 +10,48 @@
 <a href="/">🏠</a>
 <a href="/horses">🐎</a>
 </div>
+<script>
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function addMicButton(input) {
+  if (!SpeechRecognition) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '🎤';
+  btn.className = 'ml-2 px-2 py-1 rounded bg-gray-100 border text-sm';
+  btn.title = 'Tap to speak';
+  let recognition = null;
+  let listening = false;
+  btn.addEventListener('click', () => {
+    if (listening) {
+      recognition.stop();
+      btn.textContent = '🎤';
+      btn.style.background = '';
+      listening = false;
+      return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.onresult = (e) => {
+      input.value += (input.value ? ' ' : '') + e.results[0][0].transcript;
+    };
+    recognition.onend = () => {
+      btn.textContent = '🎤';
+      btn.style.background = '';
+      listening = false;
+    };
+    recognition.start();
+    btn.textContent = '⏹';
+    btn.style.background = '#fee2e2';
+    listening = true;
+  });
+  input.parentNode.insertBefore(btn, input.nextSibling);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('input[type="text"], input:not([type]), textarea').forEach(addMicButton);
+});
+</script>
 </body>
 </html>
