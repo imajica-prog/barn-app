@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold">Edit Tack Item</h1>
+<a href="/tack/{{ item.horse_id }}" class="text-blue-500 text-sm">← Back</a>
+<form method="POST" action="/edit_tack/{{ item.id }}" class="mt-4">
+  <select name="category" class="border p-2 w-full mb-2 rounded">
+    {% for c in ['Saddle','Pad','Bridle','Blanket / Sheet','Boots / Wraps','Other'] %}
+    <option {% if item.category == c %}selected{% endif %}>{{ c }}</option>
+    {% endfor %}
+  </select>
+  <input name="brand" value="{{ item.brand or '' }}" placeholder="Brand" class="border p-2 w-full mb-2 rounded">
+  <input name="description" value="{{ item.description or '' }}" placeholder="Description" class="border p-2 w-full mb-2 rounded">
+  <textarea name="notes" placeholder="Notes" class="border p-2 w-full mb-2 rounded">{{ item.notes or '' }}</textarea>
+  <button class="bg-yellow-500 text-white p-2 w-full rounded">Save</button>
+</form>
+{% endblock %}
