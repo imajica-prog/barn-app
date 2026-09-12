@@ -80,18 +80,19 @@ class Tack(db.Model):
 
 with app.app_context():
     db.create_all()
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
-        if username == os.getenv("APP_USERNAME", "admin") and password == os.getenv("APP_PASSWORD", "changeme"):
+        expected_user = os.getenv("APP_USERNAME", "admin").strip()
+        expected_pw = os.getenv("APP_PASSWORD", "changeme").strip()
+        if username.lower() == expected_user.lower() and password == expected_pw:
             user = User()
             login_user(user, remember=True)
             return redirect("/")
-        error = "Invalid username or password"
+        error = f"Login failed. Got user '{username}' ({len(username)} chars), password {len(password)} chars. Expected user '{expected_user}' ({len(expected_user)} chars), password {len(expected_pw)} chars."
     return render_template("login.html", error=error)
 
 @app.route("/logout")
