@@ -51,3 +51,57 @@ class HealthRecord(db.Model):
 
 class Record(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    horse_id = db.Column(db.Integer, nullable=False)
+    type = db.Column(db.String(50))
+    title = db.Column(db.String(100))
+    details = db.Column(db.String(200))
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+    next_due = db.Column(db.DateTime, nullable=True)
+
+class FeedProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    horse_id = db.Column(db.Integer, nullable=False)
+    hay_type = db.Column(db.String(100))
+    hay_amount = db.Column(db.String(100))
+    grain_type = db.Column(db.String(100))
+    grain_amount = db.Column(db.String(100))
+    supplements = db.Column(db.String(300))
+    notes = db.Column(db.String(300))
+    cost_per_month = db.Column(db.Float)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Tack(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    horse_id = db.Column(db.Integer, nullable=False)
+    category = db.Column(db.String(50))
+    brand = db.Column(db.String(100))
+    description = db.Column(db.String(200))
+    notes = db.Column(db.String(300))
+
+with app.app_context():
+    db.create_all()
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        if username == os.getenv("APP_USERNAME", "admin") and password == os.getenv("APP_PASSWORD", "changeme"):
+            user = User()
+            login_user(user, remember=True)
+            return redirect("/")
+        error = "Invalid username or password"
+    return render_template("login.html", error=error)
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect("/login")
+
+@app.route("/")
+@login_required
+def dashboard():
+    today = datetime.utcnow()
+    soon = today + timedelta(days=7)
