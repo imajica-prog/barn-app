@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold">Edit Appointment</h1>
+<a href="/horse/{{ appt.horse_id }}" class="text-blue-500 text-sm">← Back</a>
+<form method="POST" action="/edit_appointment/{{ appt.id }}" class="mt-4">
+  <input name="service" value="{{ appt.service }}" class="border p-2 w-full mb-2 rounded">
+  <input type="date" name="date" value="{{ appt.date.strftime('%Y-%m-%d') }}" class="border p-2 w-full mb-2 rounded">
+  <button class="bg-blue-500 text-white p-2 w-full rounded">Save</button>
+</form>
+{% endblock %}
