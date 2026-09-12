@@ -3,6 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body class="bg-gray-100 pb-20">
 <div class="p-4">{% block content %}{% endblock %}</div>
@@ -10,6 +11,7 @@
 <a href="/">🏠</a>
 <a href="/horses">🐎</a>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -51,6 +53,10 @@ function addMicButton(input) {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('input[type="text"], input:not([type]), textarea').forEach(addMicButton);
+  flatpickr('input[type="date"]', {
+    dateFormat: 'Y-m-d',
+    allowInput: true
+  });
 });
 </script>
 </body>
