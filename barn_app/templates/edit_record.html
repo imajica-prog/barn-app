@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold">Edit Record</h1>
+<a href="/horse/{{ record.horse_id }}" class="text-blue-500 text-sm">← Back</a>
+<form method="POST" action="/edit_record/{{ record.id }}" class="mt-4">
+  <select name="type" class="border p-2 w-full mb-2 rounded">
+    <option value="" disabled>Select type</option>
+    {% for t in ['Vet','Joint Injection','Farrier','Worming','Feed','Supplement','Vaccine','Dental','Injury','Medication','Note'] %}
+    <option {% if record.type == t %}selected{% endif %}>{{ t }}</option>
+    {% endfor %}
+  </select>
+  <input name="title" value="{{ record.title or '' }}" placeholder="What was done" class="border p-2 w-full mb-2 rounded">
+  <input name="details" value="{{ record.details or '' }}" placeholder="Details" class="border p-2 w-full mb-2 rounded">
+  <input type="date" name="date" value="{{ record.date.strftime('%Y-%m-%d') }}" class="border p-2 w-full mb-2 rounded">
+  <input type="date" name="next_due" value="{{ record.next_due.strftime('%Y-%m-%d') if record.next_due else '' }}" placeholder="Next due date" class="border p-2 w-full mb-2 rounded">
+  <button class="bg-purple-500 text-white p-2 w-full rounded">Save</button>
+</form>
+{% endblock %}
