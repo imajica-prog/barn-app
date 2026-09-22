@@ -1,8 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 import os
+import base64
+import json
+import urllib.request
+import urllib.error
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
@@ -19,6 +23,9 @@ app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
+
+WAIVER_ALLOWED_ORIGIN = os.getenv("WAIVER_ALLOWED_ORIGIN", "https://imajica-waiver.netlify.app")
+
 
 class User(UserMixin):
     id = 1
@@ -364,6 +371,98 @@ def delete_tack(item_id):
     db.session.delete(item)
     db.session.commit()
     return redirect(f"/tack/{horse_id}")
+
+
+@app.route("/submit_waiver", methods=["POST", "OPTIONS"])
+def submit_waiver():
+    if request.method == "OPTIONS":
+        resp = app.make_default_options_response()
+        resp.headers["Access-Control-Allow-Origin"] = WAIVER_ALLOWED_ORIGIN
+        resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        return resp
+
+    def with_cors(resp_body, status):
+        resp = jsonify(resp_body)
+        resp.status_code = status
+        resp.headers["Access-Control-Allow-Origin"] = WAIVER_ALLOWED_ORIGIN
+        return resp
+
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return with_cors({"error": "No data received"}, 400)
+
+    required = ["fullName", "address", "phone", "email", "initials", "sigDate", "signature"]
+    missing = [f for f in required if not data.get(f)]
+    if missing:
+        return with_cors({"error": f"Missing required fields: {', '.join(missing)}"}, 400)
+
+    resend_key = os.getenv("RESEND_API_KEY")
+    to_email = os.getenv("WAIVER_TO_EMAIL", "imajica@imajica.net")
+    if not resend_key:
+        return with_cors({"error": "Email is not configured on the server"}, 500)
+
+    sig_data_url = data["signature"]
+    try:
+        sig_b64 = sig_data_url.split(",", 1)[1]
+        base64.b64decode(sig_b64)  # validate it actually decodes
+    except Exception:
+        return with_cors({"error": "Invalid signature data"}, 400)
+
+    submitted_at = data.get("submittedAt", datetime.utcnow().isoformat())
+
+    body_text = (
+        f"New Imajica, LLC liability waiver submitted\n\n"
+        f"Name: {data['fullName']}\n"
+        f"Address: {data['address']}\n"
+        f"Phone: {data['phone']}\n"
+        f"Email: {data['email']}\n"
+        f"Initials: {data['initials']}\n"
+        f"Date signed: {data['sigDate']}\n"
+        f"Submitted at: {submitted_at}\n"
+    )
+
+    email_payload = {
+        "from": "Imajica Waiver <onboarding@resend.dev>",
+        "to": [to_email],
+        "subject": f"Waiver signed: {data['fullName']}",
+        "text": body_text,
+        "attachments": [
+            {
+                "filename": "signature.png",
+                "content": sig_b64,
+            }
+        ],
+    }
+
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(email_payload).encode(),
+        headers={
+            "Authorization": f"Bearer {resend_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "imajica-barn-app/1.0",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            resp.read()
+    except urllib.error.HTTPError as e:
+        try:
+            err_body = e.read().decode()
+        except Exception:
+            err_body = str(e)
+        app.logger.error(f"Resend rejected the waiver email: {e.code} {err_body}")
+        return with_cors({"error": "Saved, but the email could not be sent automatically. Please contact Imajica, LLC directly to confirm."}, 502)
+    except Exception as e:
+        app.logger.error(f"Failed to send waiver email: {e}")
+        return with_cors({"error": "Saved, but the email could not be sent automatically. Please contact Imajica, LLC directly to confirm."}, 502)
+
+    return with_cors({"status": "sent"}, 200)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
